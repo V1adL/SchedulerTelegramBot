@@ -1,8 +1,10 @@
 package org.example.my.clientschedulerbot.bot;
 
-import org.example.my.clientschedulerbot.db.DataBase;
+
 import org.example.my.clientschedulerbot.entity.Client;
 import org.example.my.clientschedulerbot.entity.User;
+import org.example.my.clientschedulerbot.service.ClientService;
+import org.example.my.clientschedulerbot.service.UserService;
 import org.example.my.clientschedulerbot.state.BotState;
 import org.example.my.clientschedulerbot.state.SessionState;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,16 +22,16 @@ import java.util.List;
 
 
 public class TelegramBot extends TelegramLongPollingBot {
-    private final DataBase dataBase;
 
     @Autowired
     private SessionState sessionState;
+    @Autowired
+    private ClientService clientService;
+    @Autowired
+    private UserService userService;
 
-
-    public TelegramBot(DefaultBotOptions options, String botToken, DataBase dataBase) {
-
+    public TelegramBot(DefaultBotOptions options, String botToken) {
         super(options, botToken);
-        this.dataBase = dataBase;
     }
 
 
@@ -63,13 +65,13 @@ public class TelegramBot extends TelegramLongPollingBot {
                             message + " " + currentYear,
                             DateTimeFormatter.ofPattern("dd.MM HH:mm yyyy")
                     );
-                    User user = dataBase.getUser(chatId);
+                    User user = userService.getUser(chatId);
                     if (user == null) {
                         user = new User(userName, chatId);
-                        dataBase.saveUser(user);
+                        userService.saveUser(user);
                     }
 
-                    dataBase.saveClient(new Client(sessionState.getClientName(chatId),
+                    clientService.saveClient(new Client(sessionState.getClientName(chatId),
                             clientDate,
                             user));
                     sessionState.clearAll();
@@ -83,7 +85,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                 }
 
             } else if (state == BotState.WAITING_FOR_DELETE_NUMBER) {
-                List<Client> clients = dataBase.getClient(dataBase.getUser(chatId));
+                List<Client> clients = clientService.getClient(userService.getUser(chatId));
                 try {
                     int id = Integer.parseInt(message);
                     if (id > 0 && id > clients.size()) {
@@ -92,7 +94,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                         executeMessage(KeyboardFactory.returnButton(chatId, sendMessage.getText()));
                     } else {
                         Client client = clients.get(id - 1);
-                        dataBase.deleteClient(client.getId());
+                        clientService.deleteClient(client.getId());
                         sessionState.clearAll();
                         executeMessage(KeyboardFactory.mainKeyboard(chatId));
                     }
@@ -141,7 +143,7 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     public void viewClients(SendMessage sendMessage, long chatId) {
 
-        List<Client> clients = dataBase.getClient(dataBase.getUser(chatId));
+        List<Client> clients = clientService.getClient(userService.getUser(chatId));
 
         if (clients.isEmpty()) {
             sendMessage.setChatId(chatId);

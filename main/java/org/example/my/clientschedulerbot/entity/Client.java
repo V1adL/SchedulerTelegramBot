@@ -1,6 +1,7 @@
 package org.example.my.clientschedulerbot.entity;
 
 import jakarta.persistence.*;
+import lombok.*;
 
 import javax.lang.model.element.Name;
 import java.time.LocalDate;
@@ -9,11 +10,14 @@ import java.time.format.DateTimeFormatter;
 import java.util.Date;
 
 @Entity
+@Data
+@NoArgsConstructor
 @Table(name = "clients")
 public class Client {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Setter(AccessLevel.NONE)
     private long id;
     @Column(name = "name")
     private String name;
@@ -41,20 +45,6 @@ public class Client {
         this.reminderSent = reminderSent;
     }
 
-    public Client() {
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public User getUser() {
-        return user;
-    }
 
     @Override
     public String toString() {
@@ -72,7 +62,5 @@ public class Client {
 
     }
 
-    public Long getId() {
-        return id;
-    }
+
 }

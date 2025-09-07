@@ -1,8 +1,11 @@
 package org.example.my.clientschedulerbot.bot;
 
 
-import org.example.my.clientschedulerbot.db.DataBase;
+
 import org.example.my.clientschedulerbot.entity.Client;
+import org.example.my.clientschedulerbot.service.ClientService;
+import org.example.my.clientschedulerbot.service.UserService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
@@ -12,21 +15,19 @@ import java.util.List;
 
 @Service
 public class NotificationService {
-    private final DataBase dataBase;  // твой DAO или репозиторий
     private final TelegramBot telegramBot;
-
-    public NotificationService(DataBase dataBase, TelegramBot telegramBot) {
-        this.dataBase = dataBase;
+    @Autowired
+    private ClientService clientService;
+    public NotificationService(TelegramBot telegramBot) {
         this.telegramBot = telegramBot;
     }
 
-    @Scheduled(fixedDelay = 60000) // раз в минуту
+    @Scheduled(fixedDelay = 60000)
     public void checkAndSendReminders() {
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime targetTime = now.plusMinutes(15);
 
-        List<Client> clientsToNotify = dataBase.findClientsByAppointmentTimeBetween(now, targetTime);
-
+        List<Client> clientsToNotify = clientService.findClientsByAppointmentTimeBetween(now,targetTime);
         for (Client client : clientsToNotify) {
 
             String message = String.format("Reminder: %s is scheduled for %s in 15 minutes",
@@ -34,7 +35,7 @@ public class NotificationService {
 
             telegramBot.sendMessage(client.getUser().getChatId(), message);
             client.setReminderSent(true);
-            dataBase.updateClient(client);
+            clientService.saveClient(client);
         }
     }
 }

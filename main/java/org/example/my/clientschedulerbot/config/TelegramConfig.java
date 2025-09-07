@@ -1,7 +1,7 @@
 package org.example.my.clientschedulerbot.config;
 
 import org.example.my.clientschedulerbot.bot.TelegramBot;
-import org.example.my.clientschedulerbot.db.DataBase;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -15,10 +15,9 @@ public class TelegramConfig {
 
    @Bean
     public TelegramBot telegramBot(@Value(value = "${bot.token}" ) String token,
-                                   TelegramBotsApi telegramBotsApi,
-                                   DataBase dataBase) throws TelegramApiException {
+                                   TelegramBotsApi telegramBotsApi) throws TelegramApiException {
         DefaultBotOptions botOptions = new DefaultBotOptions();
-        TelegramBot bot = new TelegramBot(botOptions,token,dataBase);
+        TelegramBot bot = new TelegramBot(botOptions,token);
         telegramBotsApi.registerBot(bot);
 
         return bot;
